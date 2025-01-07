@@ -21,6 +21,7 @@ const (
 	port         = "9090"
 	strenghtMAC  = `RSSI: -([0-9]{2})`
 	formatMAC    = `([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})`
+	test         = "Test"
 )
 
 func main() {
@@ -30,15 +31,13 @@ func main() {
 
 	cmd := exec.Command(commandName, commandArg, commandValue)
 
-	retour, err := cmd.StdouPipe()
+	retour, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
 	}
 
 	chanOut := make(chan string)
 	errs := make(chan error)
-
-	
 
 	go listenIO(chanOut, cmd)
 
@@ -77,7 +76,6 @@ func newService(logger log.Logger) service.Service {
 			Name:      "request_latency_in_microseconds",
 			Help:      "Total duration of requests in microseconds",
 		}, []string{"method"}),
-
 	)
 	return svc
 }

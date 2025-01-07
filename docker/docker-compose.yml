@@ -1,0 +1,21 @@
+version: "3.9"
+
+networks:
+   docker-base-net:
+      ipam:
+         driver: default
+
+volumes:
+
+services:
+   led:
+      image: trucktrack/led:latest
+      container_name: trucktrack-led
+      restart: on-failure
+      env_file:
+         - ./env/simpliciti.env
+         - ./env/global.env
+      networks:
+         - docker-base-net
+      ports:
+         - ${PAPREC_SIMPLICITI_HTTP_PORT}:${PAPREC_SIMPLICITI_HTTP_PORT}

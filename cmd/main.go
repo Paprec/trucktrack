@@ -4,14 +4,18 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 
 	"net/http"
 	"os"
 	"os/exec"
-	"regexp"
 
+	"github.com/Paprec/trucktrack/service"
 	"github.com/Paprec/trucktrack/service/HTTP/api"
-	"github.com/go-kit/kit/log"
+
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	logg "github.com/go-kit/log"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -26,40 +30,40 @@ const (
 
 func main() {
 
-	logger := log.NewLogfmtLogger(os.Stderr)
+	logger := logg.NewLogfmtLogger(os.Stderr)
 	svc := newService(logger)
 
-	cmd := exec.Command(commandName, commandArg, commandValue)
+	// cmd := exec.Command(commandName, commandArg, commandValue)
 
-	retour, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
-	}
+	// retour, err := cmd.StdoutPipe()
+	// if err != nil {
+	// 	fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
+	// }
 
-	chanOut := make(chan string)
+	// chanOut := make(chan string)
 	errs := make(chan error)
 
-	go listenIO(chanOut, cmd)
+	// go listenIO(chanOut, cmd)
 
-	go getIO(retour, chanOut)
-
+	// go getIO(retour, chanOut)
+	log.Println("Server Start")
 	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	startAddr := regexp.MustCompile(strenghtMAC)
-	MACAddr := regexp.MustCompile(formatMAC)
+	// startAddr := regexp.MustCompile(strenghtMAC)
+	// MACAddr := regexp.MustCompile(formatMAC)
 
-	for adresse := range chanOut {
+	// for adresse := range chanOut {
 
-		addr := MACAddr.FindString(adresse)
-		start := startAddr.FindString(adresse)
+	// 	addr := MACAddr.FindString(adresse)
+	// 	start := startAddr.FindString(adresse)
 
-		if addr != "" && start != "" {
-			fmt.Println(addr, start)
-		}
-	}
+	// 	if addr != "" && start != "" {
+	// 		fmt.Println(addr, start)
+	// 	}
+	// }
 }
 
-func newService(logger log.Logger) service.Service {
+func newService(logger logg.Logger) service.MACService {
 	svc := service.NewService()
 	svc = api.LoggingMiddleware(svc, logger)
 	svc = api.MetricsMiddleware(
@@ -113,8 +117,12 @@ func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 
 	log.Println("Service started using http on port %d", port)
-
+	log.Println("Server Started")
 	http.Handle("/addr", handler)
 
 	errs <- http.ListenAndServe(p, handler)
+
+	if errs != nil {
+		fmt.Println("Erreur lors de l'exécution de la commande type: ", errs)
+	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Paprec/trucktrack/service"
 	httptransport "github.com/go-kit/kit/transport/http"
+	"github.com/go-zoo/bone"
 )
 
 const (
@@ -26,9 +27,12 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 }
 
 func MakeHandler(svc service.MACService) http.Handler {
-	return httptransport.NewServer(
+	r := bone.New()
+	r.Get("/addr", httptransport.NewServer(
 		makeEndpoint(svc),
 		decodeRequest,
 		encodeResponse,
-	)
+	))
+
+	return r
 }

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
-
+	"os/signal"
+	"syscall"
 	"net/http"
 	"os"
 	"os/exec"
@@ -46,9 +47,16 @@ func main() {
 	// go listenIO(chanOut, cmd)
 
 	// go getIO(retour, chanOut)
-	log.Println("Server Start")
-	go startHTTPServer(api.MakeHandler(svc), port, errs)
+	log.Println("Server Started")
+	startHTTPServer(api.MakeHandler(svc), port, errs)
 
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
+
+	log.Println(fmt.Sprintf("public service terminated: %s", errs))
 	// startAddr := regexp.MustCompile(strenghtMAC)
 	// MACAddr := regexp.MustCompile(formatMAC)
 
@@ -116,8 +124,8 @@ func getIO(retour io.ReadCloser, chanOut chan string) {
 func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 
-	log.Println("Service started using http on port %d", port)
-	log.Println("Server Started")
+	log.Println(fmt.Sprintf("Service started using http on port: %s", port))
+
 	http.Handle("/addr", handler)
 
 	errs <- http.ListenAndServe(p, handler)

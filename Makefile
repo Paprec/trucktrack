@@ -4,5 +4,8 @@ build:
 run:
 	docker compose -f docker/docker-compose.yml up -d
 
-# run : 
-# 	go run cmd/main.go
+down:
+	docker compose -f docker/docker-compose.yml down
+
+logs:
+	docker logs trucktrack-led

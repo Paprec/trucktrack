@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"errors"
 )
 
@@ -16,6 +15,11 @@ const (
 var (
 	errInvalidWriting error = errors.New(invalidWriting)
 	ErrUnknownMethod  error = errors.New("methode non traitée")
+	Macs                    = []string{
+		"01:01:01:01:01:01",
+		"01:01:01:01:01:02",
+		"01:01:01:01:01:03",
+	}
 )
 
 type MacAddressList struct {
@@ -23,7 +27,7 @@ type MacAddressList struct {
 }
 
 type MACService interface {
-	GetMACAddresses(ctx context.Context) ([]string, error)
+	GetMACAddresses(mac []string) []string
 }
 
 type macService struct{}
@@ -32,12 +36,8 @@ func NewService() MACService {
 	return &macService{}
 }
 
-func (macService) GetMACAddresses(ctx context.Context) ([]string, error) {
+func (macService) GetMACAddresses(macs []string) []string {
 	// Pour cet exemple, on retourne une liste d'adresses MAC statiques
-	macs := []string{
-		"01:01:01:01:01:01",
-		"01:01:01:01:01:02",
-		"01:01:01:01:01:03",
-	}
-	return macs, nil
+
+	return macs
 }

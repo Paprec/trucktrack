@@ -16,6 +16,7 @@ const (
 )
 
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
+
 	return getMACAddressesRequest{}, nil
 }
 

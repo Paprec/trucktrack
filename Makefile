@@ -1,8 +1,8 @@
-# build: 
-# 	docker build --no-cache --tag=trucktrack/led -f docker/dockerfile/Dockerfile .
+build: 
+	docker build --no-cache --tag=trucktrack/led -f docker/dockerfile/Dockerfile .
 
-# # run:
-# # 	docker run --name trucktrack-led
+run:
+	docker compose -f docker/docker-compose.yml up -d
 
-run : 
-	go run cmd/main.go
+# run : 
+# 	go run cmd/main.go

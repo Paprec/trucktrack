@@ -8,10 +8,11 @@ import (
 )
 
 func makeEndpoint(svc service.MACService) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		macs, err := svc.GetMACAddresses(ctx)
-		if err != nil {
-			return nil, err
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+
+		macs := svc.GetMACAddresses(service.Macs)
+		if len(macs) == 0 {
+			return nil, service.ErrUnknownMethod
 		}
 		return getMACAddressesResponse{MACAddresses: macs}, nil
 	}

@@ -7,9 +7,6 @@ import (
 const (
 	invalidWriting = "l'écriture s'est mal passée"
 	validWriting   = "l'écriture s'est bien passée"
-	MethodGet      = "GET"
-	MethodPost     = "POST"
-	chmod          = 0770
 )
 
 var (
@@ -20,6 +17,7 @@ var (
 		"01:01:01:01:01:02",
 		"01:01:01:01:01:03",
 	}
+	AddMac string = "Adresse ajouté"
 )
 
 type MacAddressList struct {
@@ -28,6 +26,8 @@ type MacAddressList struct {
 
 type MACService interface {
 	GetMACAddresses(mac []string) []string
+
+	AddMACAddresses(addmac string) string
 }
 
 type macService struct{}
@@ -37,7 +37,11 @@ func NewService() MACService {
 }
 
 func (macService) GetMACAddresses(macs []string) []string {
-	// Pour cet exemple, on retourne une liste d'adresses MAC statiques
 
 	return macs
+}
+
+func (macService) AddMACAddresses(addmac string) string {
+
+	return addmac
 }

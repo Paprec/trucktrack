@@ -16,6 +16,22 @@ const (
 	endPointMetrics = "metrics"
 )
 
+func MakeHandler(svc service.MACService) http.Handler {
+	r := bone.New()
+	r.Get("/list", httptransport.NewServer(
+		makeEndpoint(svc),
+		decodeRequest,
+		encodeResponse,
+	))
+
+	r.Post("/newaddr", httptransport.NewServer(
+		newAddrEndpoint(svc),
+		decodeNewAddr,
+		encodeNewAddr,
+	))
+	return r
+}
+
 func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
 	return getMACAddressesRequest{}, nil
@@ -26,13 +42,12 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response interface
 	return json.NewEncoder(w).Encode(response)
 }
 
-func MakeHandler(svc service.MACService) http.Handler {
-	r := bone.New()
-	r.Get("/addr", httptransport.NewServer(
-		makeEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
-	))
+func decodeNewAddr(_ context.Context, r *http.Request) (interface{}, error) {
 
-	return r
+	return AddMACAddressesRequest{}, nil
+}
+
+func encodeNewAddr(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "Content-Type")
+	return json.NewEncoder(w).Encode(response)
 }

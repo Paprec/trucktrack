@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os/signal"
-	"syscall"
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
+	"syscall"
 
 	"github.com/Paprec/trucktrack/service"
 	"github.com/Paprec/trucktrack/service/HTTP/api"
@@ -56,7 +56,7 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	log.Println(fmt.Sprintf("public service terminated: %s", errs))
+	log.Println(fmt.Sprintf("service terminated: %s", errs))
 	// startAddr := regexp.MustCompile(strenghtMAC)
 	// MACAddr := regexp.MustCompile(formatMAC)
 
@@ -125,8 +125,6 @@ func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	p := fmt.Sprintf(":%s", port)
 
 	log.Println(fmt.Sprintf("Service started using http on port: %s", port))
-
-	http.Handle("/addr", handler)
 
 	errs <- http.ListenAndServe(p, handler)
 

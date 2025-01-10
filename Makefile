@@ -9,3 +9,9 @@ down:
 
 logs:
 	docker logs trucktrack-led
+
+list:
+	curl -X GET http://localhost:9090/list
+
+newaddr:
+	curl -X POST http://localhost:9090/newaddr

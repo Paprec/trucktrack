@@ -17,12 +17,3 @@ func makeEndpoint(svc service.MACService) endpoint.Endpoint {
 		return getMACAddressesResponse{MACAddresses: macs}, nil
 	}
 }
-
-func newAddrEndpoint(svc service.MACService) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
-
-		addmac := svc.AddMACAddresses(service.AddMac)
-
-		return AddMACAddressesResponse{addmac}, nil
-	}
-}

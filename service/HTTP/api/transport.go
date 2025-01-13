@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/Paprec/trucktrack/service"
@@ -33,12 +36,12 @@ func MakeHandler(svc service.MACService) http.Handler {
 		encodeAuthorResponse,
 	))
 
-	// // Reception JSON : ID - MAC Addresse, Time, I/O,
-	// r.Post("/activity", httptransport.NewServer(
-	// 	activityEndpoint(svc),
-	// 	decodeActivityRequest,
-	// 	encodeActivityResponse,
-	// ))
+	// Reception JSON : ID - MAC Addresse, Time, I/O,
+	r.Post("/activity", httptransport.NewServer(
+		activityEndpoint(svc),
+		decodeActivityRequest,
+		encodeActivityResponse,
+	))
 
 	return r
 }
@@ -69,12 +72,24 @@ func encodeAuthorResponse(_ context.Context, w http.ResponseWriter, response int
 
 }
 
-// func decodeActivityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeActivityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	body, errr := io.ReadAll(r.Body)
+	if errr != nil {
+		return nil, errr
+	}
+	defer r.Body.Close()
 
-// 	return getMACAddressesRequest{}, nil
-// }
+	message := string(body)
+	if message == "" {
+		return nil, fmt.Errorf("le message est vide")
+	}
+	log.Printf("Message reçu : %s\n", message)
 
-// func encodeActivityResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	return json.NewEncoder(w).Encode(response)
-// }
+	return postActivityRequest{Activity: message}, nil
+}
+
+func encodeActivityResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "text/plain")
+	_, err := w.Write([]byte(fmt.Sprintf("%s\n", response)))
+	return err
+}

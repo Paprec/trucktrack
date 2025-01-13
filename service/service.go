@@ -2,6 +2,8 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"log"
 )
 
 const (
@@ -35,6 +37,8 @@ type MACService interface {
 	GetMACAddresses(mac []string) []string
 
 	AuthorId(mac string) string
+
+	PostActivity(message string) string
 }
 
 type macService struct{}
@@ -49,14 +53,19 @@ func (macService) GetMACAddresses(macs []string) []string {
 }
 
 func (macService) AuthorId(mac string) string {
-
+	macs := ""
+	log.Println("Taille Macs:", len(Macs))
 	for i := 0; i < len(Macs); i++ {
-		switch mac != Macs[i] {
-		case true:
-			return ""
-		case false:
+		if mac == Macs[i] {
 			return mac
 		}
+		log.Println("Valeur de Macs", Macs[i])
 	}
-	return ""
+	return macs
+}
+
+func (macService) PostActivity(message string) string {
+	mesg := fmt.Sprintf("Message reçu : %s", message)
+	log.Println("mesg:", mesg)
+	return mesg
 }

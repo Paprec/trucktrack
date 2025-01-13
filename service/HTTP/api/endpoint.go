@@ -46,13 +46,12 @@ func authorEndpoint(svc service.MACService) endpoint.Endpoint {
 
 }
 
-// func activityEndpoint(svc service.MACService) endpoint.Endpoint {
-// 	return func(_ context.Context, request interface{}) (interface{}, error) {
-// 		body, err := io.ReadAll() // Mettre parametre pour ReadAll
-// 		if err != nil {
-// 			return nil, service.ErrBodyRead
-// 		}
-// 		log.Println(body)
+func activityEndpoint(svc service.MACService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(postActivityRequest)
 
-// 	}
-// }
+		//resp := svc.PostActivity(req.Activity)
+
+		return postActivityResponse{Response: req.Activity}, nil
+	}
+}

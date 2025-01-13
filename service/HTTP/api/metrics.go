@@ -42,3 +42,12 @@ func (mm *metricsMiddleware) AuthorId(addmacs string) string {
 
 	return mm.service.AuthorId(addmacs)
 }
+
+func (mm *metricsMiddleware) PostActivity(addmacs string) string {
+	defer func(begin time.Time) {
+		mm.counter.With(methode, EndPointURL).Add(1)
+		mm.latency.With(methode, EndPointURL).Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.service.AuthorId(addmacs)
+}

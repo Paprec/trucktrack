@@ -7,6 +7,7 @@ import (
 const (
 	invalidWriting = "l'écriture s'est mal passée"
 	validWriting   = "l'écriture s'est bien passée"
+	Ack            = "OK"
 )
 
 var (

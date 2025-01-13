@@ -1,13 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
 	"syscall"
 
@@ -26,7 +23,6 @@ const (
 	port         = "9090"
 	strenghtMAC  = `RSSI: -([0-9]{2})`
 	formatMAC    = `([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})`
-	test         = "Test"
 )
 
 func main() {
@@ -92,34 +88,34 @@ func newService(logger logg.Logger) service.MACService {
 	return svc
 }
 
-func listenIO(chanOut chan string, cmd *exec.Cmd) {
+// func listenIO(chanOut chan string, cmd *exec.Cmd) {
 
-	chanError := cmd.Start()
-	if chanError != nil {
-		log.Printf("Error: %s", chanError)
-	}
+// 	chanError := cmd.Start()
+// 	if chanError != nil {
+// 		log.Printf("Error: %s", chanError)
+// 	}
 
-	chanError = cmd.Wait()
-	if chanError != nil {
-		log.Printf("Error: %s", chanError)
-	}
+// 	chanError = cmd.Wait()
+// 	if chanError != nil {
+// 		log.Printf("Error: %s", chanError)
+// 	}
 
-	close(chanOut)
+// 	close(chanOut)
 
-}
+// }
 
-func getIO(retour io.ReadCloser, chanOut chan string) {
-	scanner := bufio.NewScanner(retour)
+// func getIO(retour io.ReadCloser, chanOut chan string) {
+// 	scanner := bufio.NewScanner(retour)
 
-	for scanner.Scan() {
-		chanOut <- scanner.Text()
-	}
+// 	for scanner.Scan() {
+// 		chanOut <- scanner.Text()
+// 	}
 
-	channError := scanner.Err()
-	if channError != nil {
-		log.Printf("Error: %s", channError)
-	}
-}
+// 	channError := scanner.Err()
+// 	if channError != nil {
+// 		log.Printf("Error: %s", channError)
+// 	}
+// }
 
 func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	p := fmt.Sprintf(":%s", port)

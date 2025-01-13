@@ -4,6 +4,7 @@ type getMACAddressesResponse struct {
 	MACAddresses []string `json:"mac_addresses"`
 }
 
-type addMACAddressesResponse struct {
-	ADDMacAddresses string
+type getAuthorResponse struct {
+	Authorization string `json:"ACK"`
+	Error         string `json:"error"`
 }

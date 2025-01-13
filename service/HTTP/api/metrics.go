@@ -34,11 +34,11 @@ func (mm *metricsMiddleware) GetMACAddresses(macs []string) []string {
 	return mm.service.GetMACAddresses(macs)
 }
 
-func (mm *metricsMiddleware) AddMACAddresses(addmacs string) string {
+func (mm *metricsMiddleware) AuthorId(addmacs string) string {
 	defer func(begin time.Time) {
 		mm.counter.With(methode, EndPointURL).Add(1)
 		mm.latency.With(methode, EndPointURL).Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.service.AddMACAddresses(addmacs)
+	return mm.service.AuthorId(addmacs)
 }

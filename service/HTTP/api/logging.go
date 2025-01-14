@@ -31,7 +31,7 @@ func (lm loggingMiddleware) GetMACAddresses(macs []string) []string {
 	return lm.service.GetMACAddresses(macs)
 }
 
-func (lm loggingMiddleware) AddMACAddresses(addmac string) string {
+func (lm loggingMiddleware) AuthorId(addmac string) string {
 	defer func(begin time.Time) {
 		message := fmt.Sprintf("executing the method took %s to complete", time.Since(begin))
 		if len(addmac) == 0 {
@@ -39,5 +39,16 @@ func (lm loggingMiddleware) AddMACAddresses(addmac string) string {
 		}
 		lm.logger.Log("message without errors", message)
 	}(time.Now())
-	return lm.service.AddMACAddresses(addmac)
+	return lm.service.AuthorId(addmac)
+}
+
+func (lm loggingMiddleware) PostActivity(addmac string) string {
+	defer func(begin time.Time) {
+		message := fmt.Sprintf("executing the method took %s to complete", time.Since(begin))
+		if len(addmac) == 0 {
+			lm.logger.Log("message", message, "with error")
+		}
+		lm.logger.Log("message without errors", message)
+	}(time.Now())
+	return lm.service.AuthorId(addmac)
 }

@@ -7,13 +7,51 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func makeEndpoint(svc service.MACService) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+const (
+	ack     = "OK"
+	nack    = "Not OK"
+	empty   = ""
+	errNack = "unauthorized vehicule"
+)
 
-		macs := svc.GetMACAddresses(service.Macs)
-		if len(macs) == 0 {
-			return nil, service.ErrUnknownMethod
+// func listEndpoint(svc service.MACService) endpoint.Endpoint {
+// 	return func(_ context.Context, request interface{}) (interface{}, error) {
+
+// 		macs := svc.GetMACAddresses(service.Macs)
+// 		if len(macs) == 0 {
+// 			return nil, service.ErrUnknownMethod
+// 		}
+// 		return getMACAddressesResponse{MACAddresses: macs}, nil
+// 	}
+// }
+
+func authorEndpoint(svc service.MACService) endpoint.Endpoint {
+
+	return func(_ context.Context, request interface{}) (interface{}, error) {
+		req := request.(getAuthorRequest)
+		id := svc.AuthorId(req.ID)
+
+		// if err != nil {
+		// 	return nil, service.ErrAuthreq
+		// }
+
+		switch id != empty {
+		case true:
+			return getAuthorResponse{Authorization: ack, Error: empty}, nil
+		case false:
+			return getAuthorResponse{Authorization: nack, Error: errNack}, nil
 		}
-		return getMACAddressesResponse{MACAddresses: macs}, nil
+		return getAuthorResponse{Authorization: empty, Error: empty}, nil
+	}
+
+}
+
+func activityEndpoint(svc service.MACService) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(postActivityRequest)
+
+		//resp := svc.PostActivity(req.Activity)
+
+		return postActivityResponse{Response: req.Activity}, nil
 	}
 }

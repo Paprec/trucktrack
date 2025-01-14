@@ -3,6 +3,9 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/Paprec/trucktrack/service"
@@ -19,36 +22,74 @@ const (
 func MakeHandler(svc service.MACService) http.Handler {
 	r := bone.New()
 	// Server -> Master
-	r.Get("/list", httptransport.NewServer(
-		makeEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
-	))
+	// r.Get("/list", httptransport.NewServer(
+	// 	listEndpoint(svc),
+	// 	decodeListRequest,
+	// 	encodeListResponse,
+	// ))
 
 	// Master <-> Slave
 	// En param : ID - MAC addresse
 	r.Get("/author", httptransport.NewServer(
-		makeEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
+		authorEndpoint(svc),
+		decodeAuthorRequest,
+		encodeAuthorResponse,
 	))
 
 	// Reception JSON : ID - MAC Addresse, Time, I/O,
 	r.Post("/activity", httptransport.NewServer(
-		makeEndpoint(svc),
-		decodeRequest,
-		encodeResponse,
+		activityEndpoint(svc),
+		decodeActivityRequest,
+		encodeActivityResponse,
 	))
 
 	return r
 }
 
-func decodeRequest(_ context.Context, r *http.Request) (interface{}, error) {
+// func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
-	return getMACAddressesRequest{}, nil
+// 	return getMACAddressesRequest{}, nil
+// }
+
+// func encodeListResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	return json.NewEncoder(w).Encode(response)
+// }
+
+func decodeAuthorRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	req := r.URL.Query()
+	macAddress := req.Get("ID")
+	return getAuthorRequest{ID: macAddress}, nil
 }
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(response)
+func encodeAuthorResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	ack := response.(getAuthorResponse)
+	if ack.Authorization != "OK" {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+	w.WriteHeader(http.StatusOK)
+	return json.NewEncoder(w).Encode(ack)
+
+}
+
+func decodeActivityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	body, errr := io.ReadAll(r.Body)
+	if errr != nil {
+		return nil, errr
+	}
+	defer r.Body.Close()
+
+	message := string(body)
+	if message == "" {
+		return nil, fmt.Errorf("le message est vide")
+	}
+	log.Printf("Message reçu : %s\n", message)
+
+	return postActivityRequest{Activity: message}, nil
+}
+
+func encodeActivityResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "text/plain")
+	_, err := w.Write([]byte(fmt.Sprintf("%s\n", response)))
+	return err
 }

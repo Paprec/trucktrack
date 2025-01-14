@@ -6,14 +6,18 @@ projet de lecture bluetooth
 
 To start the code, you need to execute :
 
+`make build`
 `make run`
 
-And in a new terminal :
+If you want tot check that a MAC address is authorized:
 
-`curl http://localhost:9090/addr`
+`curl http://localhost:9090/author?ID=01:01:01:01:01:01`
+Feel free to edit the MAC address to see the different result we have
 
-The serveur should return a JSON type message with the following MAC addresses :
+If you want to send a message to the server;
 
-`01:01:01:01:01:01`
-`01:01:01:01:01:02`
-`01:01:01:01:01:03`
+`curl -X POST http://localhost:9090/activity -d "Your message"`
+
+The serveur should return you this:
+
+`{Your message}`

@@ -1,9 +1,14 @@
 package api
 
-type getMACAddressesResponse struct {
-	MACAddresses []string `json:"mac_addresses"`
+// type getMACAddressesResponse struct {
+// 	MACAddresses []string `json:"mac_addresses"`
+// }
+
+type getAuthorResponse struct {
+	Authorization string `json:"ACK"`
+	Error         string `json:"error"`
 }
 
-type addMACAddressesResponse struct {
-	ADDMacAddresses string
+type postActivityResponse struct {
+	Response string `json:"Response"`
 }

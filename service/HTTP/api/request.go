@@ -1,5 +1,11 @@
 package api
 
-type getMACAddressesRequest struct{}
+// type getMACAddressesRequest struct{}
 
-type AddMACAddressesRequest struct{}
+type getAuthorRequest struct {
+	ID string
+}
+
+type postActivityRequest struct {
+	Activity string
+}

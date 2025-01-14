@@ -21,7 +21,7 @@ var (
 	ErrUnknownMethod  error = errors.New("methode non traitée")
 	ErrBodyRead       error = errors.New(errorBodyRead)
 	ErrAuthreq        error = errors.New(errorAuthReq)
-	Macs                    = [3]string{
+	Macs                    = []string{
 		"01:01:01:01:01:01",
 		"01:01:01:01:01:02",
 		"01:01:01:01:01:03",
@@ -54,7 +54,7 @@ func (macService) GetMACAddresses(macs []string) []string {
 
 func (macService) AuthorId(mac string) string {
 	macs := ""
-	log.Println("Taille Macs:", len(Macs))
+
 	for i := 0; i < len(Macs); i++ {
 		if mac == Macs[i] {
 			return mac

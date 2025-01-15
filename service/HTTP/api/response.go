@@ -5,8 +5,7 @@ type getMACAddressesResponse struct {
 }
 
 type getAuthorResponse struct {
-	Authorization string `json:"ACK"`
-	Error         string `json:"error"`
+	Authorization string
 }
 
 type postActivityResponse struct {

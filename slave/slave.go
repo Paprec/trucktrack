@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"syscall"
 )
 
@@ -22,11 +23,25 @@ const (
 	strenghtMAC  = `RSSI: -([0-9]{2})`
 	formatMAC    = `([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})`
 	link         = "http://localhost:9090/"
-	message      = "Camion"
+	author       = "author"
+	activity     = "activity"
+	authorForm   = "?ID="
+	in           = "entre"
+	out          = "sort"
+	authorIn     = "attend a l'entree"
+	authorOut    = "attend a la sortie"
+)
+
+var (
+	addr    string
+	rssi    int
+	errconv error
 )
 
 func main() {
 
+	rssiAddr := regexp.MustCompile(strenghtMAC)
+	MACAddr := regexp.MustCompile(formatMAC)
 	cmd := exec.Command(commandName, commandArg, commandValue)
 
 	retour, err := cmd.StdoutPipe()
@@ -41,9 +56,27 @@ func main() {
 
 	go getIO(retour, chanOut)
 
-	go getRequest("list")
+	for adresse := range chanOut {
 
-	go postRequest("activity", message)
+		addr = MACAddr.FindString(adresse)
+		rssi, errconv = strconv.Atoi(rssiAddr.FindString(adresse))
+		if errconv != nil {
+			fmt.Println("Erreur lors de la conversion string to int: ", errconv)
+		}
+		if addr != "" && rssi != 0 {
+			fmt.Println(addr, rssi)
+		}
+	}
+
+	resp := getRequest(addr)
+	if resp != true {
+		//Barriere Fermee
+	}
+	// Barriere ouverte
+
+	if rssi > -40 {
+		postRequest(addr)
+	}
 
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -53,18 +86,7 @@ func main() {
 
 	err = <-errs
 	log.Println(fmt.Sprintf("service terminated: %s", err))
-	startAddr := regexp.MustCompile(strenghtMAC)
-	MACAddr := regexp.MustCompile(formatMAC)
 
-	for adresse := range chanOut {
-
-		addr := MACAddr.FindString(adresse)
-		start := startAddr.FindString(adresse)
-
-		if addr != "" && start != "" {
-			fmt.Println(addr, start)
-		}
-	}
 }
 
 func listenIO(chanOut chan string, cmd *exec.Cmd) {
@@ -96,9 +118,9 @@ func getIO(retour io.ReadCloser, chanOut chan string) {
 	}
 }
 
-func getRequest(addrend string) {
+func getRequest(id string) bool {
 
-	req := link + addrend
+	req := link + author + authorForm + id
 	response, errors := http.Get(req)
 	if errors != nil {
 		log.Println("Error Get method")
@@ -108,16 +130,20 @@ func getRequest(addrend string) {
 		log.Println("Error Read Body")
 	}
 	response.Body.Close()
-	resp := fmt.Sprintf("%s", body)
-	log.Printf(resp)
+	resp := string(body)
 
+	return resp == "OK"
 }
 
-func postRequest(addrend string, message string) {
+func postRequest(id string) {
 
-	req := link + addrend
-	body := bytes.NewBuffer([]byte(message))
-	response, errors := http.Post(req, "application/json", body)
+	reqIn := link + activity + "Le camion" + id + in
+	// reqOut := link + activity + "Le camion" + id + out
+	// reqAuthorIn := link + activity + "Le camion" + id + authorIn
+	// reqAuthorOut := link + activity + "Le camion" + id + authorOut
+
+	body := bytes.NewBuffer([]byte(id))
+	response, errors := http.Post(reqIn, "application/json", body)
 	if errors != nil {
 		log.Println("Error POST method")
 	}

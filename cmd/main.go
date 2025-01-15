@@ -48,14 +48,13 @@ func main() {
 
 	startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	//go getRequest("list")
+	go getRequest("list")
 
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT)
 		errs <- fmt.Errorf("%s", <-c)
 	}()
-	//time.Sleep(3000000000)
 
 	// log.Println(fmt.Sprintf("service terminated: %s", errs))
 	// startAddr := regexp.MustCompile(strenghtMAC)

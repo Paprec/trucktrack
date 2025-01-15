@@ -63,12 +63,14 @@ func decodeAuthorRequest(_ context.Context, r *http.Request) (interface{}, error
 }
 
 func encodeAuthorResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "text/plain")
 	ack := response.(getAuthorResponse)
 	if ack.Authorization != "OK" {
 		w.WriteHeader(http.StatusUnauthorized)
 	}
-	w.WriteHeader(http.StatusOK)
-	return json.NewEncoder(w).Encode(ack)
+
+	_, err := w.Write([]byte(fmt.Sprintf("%s\n", response)))
+	return err
 
 }
 

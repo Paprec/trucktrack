@@ -22,11 +22,11 @@ const (
 func MakeHandler(svc service.MACService) http.Handler {
 	r := bone.New()
 	// Server -> Master
-	// r.Get("/list", httptransport.NewServer(
-	// 	listEndpoint(svc),
-	// 	decodeListRequest,
-	// 	encodeListResponse,
-	// ))
+	r.Get("/list", httptransport.NewServer(
+		listEndpoint(svc),
+		decodeListRequest,
+		encodeListResponse,
+	))
 
 	// Master <-> Slave
 	// En param : ID - MAC addresse
@@ -46,15 +46,15 @@ func MakeHandler(svc service.MACService) http.Handler {
 	return r
 }
 
-// func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
 
-// 	return getMACAddressesRequest{}, nil
-// }
+	return getMACAddressesRequest{}, nil
+}
 
-// func encodeListResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	return json.NewEncoder(w).Encode(response)
-// }
+func encodeListResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(response)
+}
 
 func decodeAuthorRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	req := r.URL.Query()

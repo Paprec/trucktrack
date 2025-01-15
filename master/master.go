@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
+	"regexp"
 	"syscall"
 
 	"github.com/Paprec/trucktrack/service"
@@ -32,44 +35,44 @@ func main() {
 	logger := logg.NewLogfmtLogger(os.Stderr)
 	svc := newService(logger)
 
-	// cmd := exec.Command(commandName, commandArg, commandValue)
+	cmd := exec.Command(commandName, commandArg, commandValue)
 
-	// retour, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
-	// }
+	retour, err := cmd.StdoutPipe()
+	if err != nil {
+		fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
+	}
 
-	// chanOut := make(chan string)
+	chanOut := make(chan string)
 	errs := make(chan error)
 
-	// go listenIO(chanOut, cmd)
+	go listenIO(chanOut, cmd)
 
-	// go getIO(retour, chanOut)
+	go getIO(retour, chanOut)
 
-	startHTTPServer(api.MakeHandler(svc), port, errs)
+	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	//go getRequest("list")
+	go getRequest("list")
 
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT)
 		errs <- fmt.Errorf("%s", <-c)
 	}()
-	//time.Sleep(3000000000)
 
-	// log.Println(fmt.Sprintf("service terminated: %s", errs))
-	// startAddr := regexp.MustCompile(strenghtMAC)
-	// MACAddr := regexp.MustCompile(formatMAC)
+	err = <-errs
+	log.Println(fmt.Sprintf("service terminated: %s", err))
+	startAddr := regexp.MustCompile(strenghtMAC)
+	MACAddr := regexp.MustCompile(formatMAC)
 
-	// for adresse := range chanOut {
+	for adresse := range chanOut {
 
-	// 	addr := MACAddr.FindString(adresse)
-	// 	start := startAddr.FindString(adresse)
+		addr := MACAddr.FindString(adresse)
+		start := startAddr.FindString(adresse)
 
-	// 	if addr != "" && start != "" {
-	// 		fmt.Println(addr, start)
-	// 	}
-	// }
+		if addr != "" && start != "" {
+			fmt.Println(addr, start)
+		}
+	}
 }
 
 func newService(logger logg.Logger) service.MACService {
@@ -93,42 +96,42 @@ func newService(logger logg.Logger) service.MACService {
 	return svc
 }
 
-// func listenIO(chanOut chan string, cmd *exec.Cmd) {
+func listenIO(chanOut chan string, cmd *exec.Cmd) {
 
-// 	chanError := cmd.Start()
-// 	if chanError != nil {
-// 		log.Printf("Error: %s", chanError)
-// 	}
+	chanError := cmd.Start()
+	if chanError != nil {
+		log.Printf("Error: %s", chanError)
+	}
 
-// 	chanError = cmd.Wait()
-// 	if chanError != nil {
-// 		log.Printf("Error: %s", chanError)
-// 	}
+	chanError = cmd.Wait()
+	if chanError != nil {
+		log.Printf("Error: %s", chanError)
+	}
 
-// 	close(chanOut)
+	close(chanOut)
 
-// }
+}
 
-// func getIO(retour io.ReadCloser, chanOut chan string) {
-// 	scanner := bufio.NewScanner(retour)
+func getIO(retour io.ReadCloser, chanOut chan string) {
+	scanner := bufio.NewScanner(retour)
 
-// 	for scanner.Scan() {
-// 		chanOut <- scanner.Text()
-// 	}
+	for scanner.Scan() {
+		chanOut <- scanner.Text()
+	}
 
-// 	channError := scanner.Err()
-// 	if channError != nil {
-// 		log.Printf("Error: %s", channError)
-// 	}
-// }
+	channError := scanner.Err()
+	if channError != nil {
+		log.Printf("Error: %s", channError)
+	}
+}
 
 func startHTTPServer(handler http.Handler, port string, errs chan error) {
 
-	p := fmt.Sprintf(":%s", port)
+	//p := fmt.Sprintf(":%s", port)
 
 	log.Printf(fmt.Sprintf("Service started using http on port: %s", port))
 
-	errs <- http.ListenAndServe(p, handler)
+	errs <- http.ListenAndServe(port, handler)
 
 	if errs != nil {
 		fmt.Println("Erreur lors de l'exécution de la commande type: ", errs)

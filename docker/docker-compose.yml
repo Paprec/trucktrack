@@ -1,15 +1,15 @@
 networks:
-   docker-base-net:
-      ipam:
-         driver: default
+  docker-base-net:
+    ipam:
+      driver: default
 
 services:
-   led:
-      image: trucktrack/led:latest
-      container_name: trucktrack-led
-      restart: on-failure
+  led:
+    image: trucktrack/led:latest
+    container_name: trucktrack-led
+    restart: on-failure
 
-      networks:
-         - docker-base-net
-      ports:
-         - 9090:9090
+    networks:
+      - docker-base-net
+    ports:
+      - 9090:9090

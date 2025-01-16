@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"strings"
 
 	"github.com/Paprec/trucktrack/service"
 	"github.com/go-kit/kit/endpoint"
@@ -31,17 +32,13 @@ func authorEndpoint(svc service.MACService) endpoint.Endpoint {
 		req := request.(getAuthorRequest)
 		id := svc.AuthorId(req.ID)
 
-		// if err != nil {
-		// 	return nil, service.ErrAuthreq
-		// }
-
 		switch id != empty {
 		case true:
-			return getAuthorResponse{Authorization: ack, Error: empty}, nil
+			return getAuthorResponse{ack}, nil
 		case false:
-			return getAuthorResponse{Authorization: nack, Error: errNack}, nil
+			return getAuthorResponse{nack}, nil
 		}
-		return getAuthorResponse{Authorization: empty, Error: empty}, nil
+		return getAuthorResponse{empty}, nil
 	}
 
 }
@@ -49,9 +46,18 @@ func authorEndpoint(svc service.MACService) endpoint.Endpoint {
 func activityEndpoint(svc service.MACService) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(postActivityRequest)
+		if strings.Contains(req.Activity, "attend") {
+			addr := req.Activity[10:27]
 
-		//resp := svc.PostActivity(req.Activity)
+			id := svc.AuthorId(addr)
 
-		return postActivityResponse{Response: req.Activity}, nil
+			if id != empty {
+				return postActivityResponse{Response: "Ouvrir"}, nil
+			}
+			return postActivityResponse{Response: "Fermer"}, nil
+		}
+
+		return postActivityResponse{Response: "OK"}, nil
+
 	}
 }

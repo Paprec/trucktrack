@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"regexp"
+	"strconv"
 	"syscall"
 
 	"github.com/Paprec/trucktrack/service"
@@ -28,6 +30,20 @@ const (
 	strenghtMAC  = `RSSI: -([0-9]{2})`
 	formatMAC    = `([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})`
 	link         = "http://localhost:9090/"
+	author       = "author"
+	activity     = "activity"
+	authorForm   = "?ID="
+	in           = "entre"
+	out          = "sort"
+	authorIn     = "attend a l'entree"
+	authorOut    = "attend a la sortie"
+)
+
+var (
+	addr    string
+	rssi    int
+	errconv error
+	res     []byte
 )
 
 func main() {
@@ -49,9 +65,13 @@ func main() {
 
 	go getIO(retour, chanOut)
 
+	go getAddrRssi(chanOut)
+
 	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
 	go getRequest("list")
+
+	rssiCase()
 
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -60,19 +80,7 @@ func main() {
 	}()
 
 	err = <-errs
-	log.Println(fmt.Sprintf("service terminated: %s", err))
-	startAddr := regexp.MustCompile(strenghtMAC)
-	MACAddr := regexp.MustCompile(formatMAC)
-
-	for adresse := range chanOut {
-
-		addr := MACAddr.FindString(adresse)
-		start := startAddr.FindString(adresse)
-
-		if addr != "" && start != "" {
-			fmt.Println(addr, start)
-		}
-	}
+	log.Printf("%s\n", fmt.Sprintf("service terminated: %s", err))
 }
 
 func newService(logger logg.Logger) service.MACService {
@@ -138,7 +146,7 @@ func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	}
 }
 
-func getRequest(addrend string) {
+func getRequest(addrend string) []byte {
 
 	req := link + addrend
 	response, errors := http.Get(req)
@@ -153,4 +161,63 @@ func getRequest(addrend string) {
 	resp := fmt.Sprintf("%s", body)
 	log.Printf(resp)
 
+	return body
+
+}
+
+func getAddrRssi(chanOut chan string) {
+	rssiAddr := regexp.MustCompile(strenghtMAC)
+	MACAddr := regexp.MustCompile(formatMAC)
+
+	for adresse := range chanOut {
+
+		addr = MACAddr.FindString(adresse)
+		rssi, errconv = strconv.Atoi(rssiAddr.FindString(adresse))
+		if errconv != nil {
+			fmt.Println("Erreur lors de la conversion string to int: ", errconv)
+		}
+		if addr != "" && rssi != 0 {
+			fmt.Println(addr, rssi)
+		}
+	}
+}
+
+func postRequest(id string) {
+
+	reqIn := link + activity + "Le camion" + id + in
+	// reqOut := link + activity + "Le camion" + id + out
+	// reqAuthorIn := link + activity + "Le camion" + id + authorIn
+	// reqAuthorOut := link + activity + "Le camion" + id + authorOut
+
+	body := bytes.NewBuffer([]byte(id))
+	response, errors := http.Post(reqIn, "application/json", body)
+	if errors != nil {
+		log.Println("Error POST method")
+	}
+
+	res, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Println("Error Read Body")
+	}
+
+	response.Body.Close()
+	resp := string(res)
+	log.Println(resp)
+
+}
+
+func rssiCase() {
+	if rssi > -70 {
+		res = getRequest(addr)
+		log.Println("res:", string(res))
+
+		if string(res) != "OK" {
+			log.Println("Barrière fermée")
+		}
+	}
+
+	if rssi > -40 && string(res) == "OK" {
+		postRequest(addr)
+		log.Println("Barrière ouverte")
+	}
 }

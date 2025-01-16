@@ -69,7 +69,7 @@ func encodeAuthorResponse(_ context.Context, w http.ResponseWriter, response int
 		w.WriteHeader(http.StatusUnauthorized)
 	}
 
-	_, err := w.Write([]byte(fmt.Sprintf("%s\n", response)))
+	_, err := w.Write([]byte(ack.Authorization))
 	return err
 
 }

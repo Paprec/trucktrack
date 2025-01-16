@@ -36,12 +36,11 @@ var (
 	addr    string
 	rssi    int
 	errconv error
+	res     []byte
 )
 
 func main() {
 
-	rssiAddr := regexp.MustCompile(strenghtMAC)
-	MACAddr := regexp.MustCompile(formatMAC)
 	cmd := exec.Command(commandName, commandArg, commandValue)
 
 	retour, err := cmd.StdoutPipe()
@@ -56,27 +55,9 @@ func main() {
 
 	go getIO(retour, chanOut)
 
-	for adresse := range chanOut {
+	go getAddrRssi(chanOut)
 
-		addr = MACAddr.FindString(adresse)
-		rssi, errconv = strconv.Atoi(rssiAddr.FindString(adresse))
-		if errconv != nil {
-			fmt.Println("Erreur lors de la conversion string to int: ", errconv)
-		}
-		if addr != "" && rssi != 0 {
-			fmt.Println(addr, rssi)
-		}
-	}
-
-	resp := getRequest(addr)
-	if resp != true {
-		//Barriere Fermee
-	}
-	// Barriere ouverte
-
-	if rssi > -40 {
-		postRequest(addr)
-	}
+	rssiCase()
 
 	go func() {
 		c := make(chan os.Signal, 1)
@@ -85,7 +66,7 @@ func main() {
 	}()
 
 	err = <-errs
-	log.Println(fmt.Sprintf("service terminated: %s", err))
+	log.Printf("%s\n", fmt.Sprintf("service terminated: %s", err))
 
 }
 
@@ -118,7 +99,7 @@ func getIO(retour io.ReadCloser, chanOut chan string) {
 	}
 }
 
-func getRequest(id string) bool {
+func getRequest(id string) []byte {
 
 	req := link + author + authorForm + id
 	response, errors := http.Get(req)
@@ -130,9 +111,8 @@ func getRequest(id string) bool {
 		log.Println("Error Read Body")
 	}
 	response.Body.Close()
-	resp := string(body)
 
-	return resp == "OK"
+	return body
 }
 
 func postRequest(id string) {
@@ -154,7 +134,40 @@ func postRequest(id string) {
 	}
 
 	response.Body.Close()
-	resp := fmt.Sprintf("%s", res)
-	log.Printf(resp)
+	resp := string(res)
+	log.Println(resp)
 
+}
+
+func getAddrRssi(chanOut chan string) {
+	rssiAddr := regexp.MustCompile(strenghtMAC)
+	MACAddr := regexp.MustCompile(formatMAC)
+
+	for adresse := range chanOut {
+
+		addr = MACAddr.FindString(adresse)
+		rssi, errconv = strconv.Atoi(rssiAddr.FindString(adresse))
+		if errconv != nil {
+			fmt.Println("Erreur lors de la conversion string to int: ", errconv)
+		}
+		if addr != "" && rssi != 0 {
+			fmt.Println(addr, rssi)
+		}
+	}
+}
+
+func rssiCase() {
+	if rssi > -70 {
+		res = getRequest(addr)
+		log.Println("res:", string(res))
+
+		if string(res) != "OK" {
+			log.Println("Barrière fermée")
+		}
+	}
+
+	if rssi > -40 && string(res) == "OK" {
+		postRequest(addr)
+		log.Println("Barrière ouverte")
+	}
 }

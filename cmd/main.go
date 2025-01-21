@@ -25,10 +25,16 @@ const (
 	strenghtMAC  = `RSSI: -([0-9]{2})`
 	formatMAC    = `([0-9A-Fa-f]{2}(:[0-9A-Fa-f]{2}){5})`
 	link         = "http://localhost:9090/"
+	author       = "author"
+	authorForm   = "?ID="
 )
 
-func main() {
+type Addresses struct {
+	MacAddresses []string `json:"mac_addresses"`
+}
 
+func main() {
+	//var test Addresses
 	logger := logg.NewLogfmtLogger(os.Stderr)
 	svc := newService(logger)
 
@@ -46,17 +52,21 @@ func main() {
 
 	// go getIO(retour, chanOut)
 
-	startHTTPServer(api.MakeHandler(svc), port, errs)
+	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	go getRequest("list")
+	res := getRequest("list")
+	log.Println("res:", string(res))
+	if string(res) == "OK" {
+		log.Println("Barriere UP")
+	}
+	// errjsonparse := json.Unmarshal(res, &test)
 
-	go func() {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT)
-		errs <- fmt.Errorf("%s", <-c)
-	}()
+	// if errjsonparse != nil {
+	// 	log.Println("Error JSON Parse")
+	// }
 
-	// log.Println(fmt.Sprintf("service terminated: %s", errs))
+	// log.Printf("JSON Parse -> %v\n", test)
+
 	// startAddr := regexp.MustCompile(strenghtMAC)
 	// MACAddr := regexp.MustCompile(formatMAC)
 
@@ -69,6 +79,15 @@ func main() {
 	// 		fmt.Println(addr, start)
 	// 	}
 	// }
+
+	go func() {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
+
+	err := <-errs
+	log.Printf("%s", fmt.Sprintf("service terminated: %s", err))
 }
 
 func newService(logger logg.Logger) service.MACService {
@@ -128,25 +147,42 @@ func startHTTPServer(handler http.Handler, port string, errs chan error) {
 	log.Printf(fmt.Sprintf("Service started using http on port: %s", port))
 
 	errs <- http.ListenAndServe(p, handler)
-
+	log.Println("errs:", errs)
 	if errs != nil {
 		fmt.Println("Erreur lors de l'exécution de la commande type: ", errs)
 	}
+
 }
 
-func getRequest(addrend string) {
+// func getRequest(addrend string) []byte {
 
-	req := link + addrend
+// 	req := link + addrend
+// 	response, errors := http.Get(req)
+// 	if errors != nil {
+// 		log.Println("Error comm HTTP")
+// 	}
+// 	body, errors := io.ReadAll(response.Body)
+// 	if errors != nil {
+// 		log.Println("Error Read Body")
+// 	}
+// 	response.Body.Close()
+// 	// resp := fmt.Sprintf("%s", body)
+// 	// log.Printf(resp)
+// 	return body
+// }
+
+func getRequest(id string) []byte {
+
+	req := link + author + authorForm + "01:01:01:01:01:01"
 	response, errors := http.Get(req)
 	if errors != nil {
-		log.Println("Error comm HTTP")
+		log.Println("Error Get method")
 	}
 	body, errors := io.ReadAll(response.Body)
 	if errors != nil {
 		log.Println("Error Read Body")
 	}
 	response.Body.Close()
-	resp := fmt.Sprintf("%s", body)
-	log.Printf(resp)
 
+	return body
 }

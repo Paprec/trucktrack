@@ -8,9 +8,11 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Paprec/trucktrack/service"
 	"github.com/Paprec/trucktrack/service/HTTP/api"
+	"github.com/stianeikeland/go-rpio"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	logg "github.com/go-kit/log"
@@ -29,14 +31,23 @@ const (
 	authorForm   = "?ID="
 )
 
+var (
+	pin = rpio.Pin(17)
+)
+
 type Addresses struct {
 	MacAddresses []string `json:"mac_addresses"`
 }
 
 func main() {
-	//var test Addresses
+	// var test Addresses
 	logger := logg.NewLogfmtLogger(os.Stderr)
 	svc := newService(logger)
+	if err := rpio.Open(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	pin.Output()
 
 	// cmd := exec.Command(commandName, commandArg, commandValue)
 
@@ -54,10 +65,20 @@ func main() {
 
 	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	res := getRequest("list")
-	log.Println("res:", string(res))
-	if string(res) == "OK" {
-		log.Println("Barriere UP")
+	for {
+		res := getRequest("list")
+		log.Println("res:", string(res))
+		if string(res) == "OK" {
+			pin.Toggle()
+		}
+		time.Sleep(time.Second)
+
+		res = getRequest("list")
+		log.Println("res:", string(res))
+		if string(res) == "OK" {
+			pin.Toggle()
+		}
+		time.Sleep(time.Second)
 	}
 	// errjsonparse := json.Unmarshal(res, &test)
 

@@ -12,16 +12,4 @@ services:
     networks:
       - docker-base-net
     ports:
-      - 9090:9090
-
-    privileged: true
-    devices:
-      - "/dev/gpiomem:/dev/gpiomem"
-      - "/dev/ttyAMA0:/dev/ttyAMA0"
-      - "/dev/serial1:/dev/serial1"
-    volumes:
-      - /sys/class/gpio:/sys/class/gpio
-      - /run/dbus:/run/dbus
-    environment:
-      - ENV_VAR=some_value
-    network_mode: "host"
+      - "9090:9090"

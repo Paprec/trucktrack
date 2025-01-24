@@ -12,4 +12,4 @@ services:
     networks:
       - docker-base-net
     ports:
-      - 9090:9090
+      - "9090:9090"

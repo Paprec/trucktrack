@@ -7,6 +7,7 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/go-zoo/bone v1.3.0
 	github.com/prometheus/client_golang v1.20.5
+	github.com/stianeikeland/go-rpio v4.2.0+incompatible
 )
 
 require (
@@ -17,6 +18,6 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
 )

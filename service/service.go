@@ -14,15 +14,16 @@ const (
 )
 
 var (
-	errInvalidWriting error = errors.New(invalidWriting)
-	errInvalidReading error = errors.New(invalidReading)
-	ErrUnknownMethod  error = errors.New("methode non traitée")
-	ErrBodyRead       error = errors.New(errorBodyRead)
-	ErrAuthreq        error = errors.New(errorAuthReq)
-	Macs                    = []string{
+	//errInvalidWriting error = errors.New(invalidWriting)
+	//errInvalidReading error = errors.New(invalidReading)
+	ErrUnknownMethod error = errors.New("methode non traitée")
+	ErrBodyRead      error = errors.New(errorBodyRead)
+	ErrAuthreq       error = errors.New(errorAuthReq)
+	Macs                   = []string{
 		"01:01:01:01:01:01",
 		"01:01:01:01:01:02",
 		"01:01:01:01:01:03",
+		"A8:AB:B5:DA:05:F5",
 	}
 	AddMac string = "Adresse ajouté"
 )

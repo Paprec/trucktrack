@@ -20,6 +20,6 @@ services:
       - "/dev/serial1:/dev/serial1"
       - "/dev/vhci:/dev/vhci"
     volumes:
-      - /sys/class/gpio:/sys/class/gpio
-      - /run/dbus:/run/dbus
-      - /usr/bin/bluetoothctl
+      - ../../../sys/class/gpio:/gpio
+      - ../../../run/dbus:/dbus
+      - ../../../usr/bin/bluetoothctl:/bluetoothctl

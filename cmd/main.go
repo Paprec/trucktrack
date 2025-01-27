@@ -1,18 +1,20 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
+	"regexp"
 	"syscall"
-	"time"
 
 	"github.com/Paprec/trucktrack/service"
 	"github.com/Paprec/trucktrack/service/HTTP/api"
-	"github.com/stianeikeland/go-rpio"
 
 	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
 	logg "github.com/go-kit/log"
@@ -29,10 +31,12 @@ const (
 	link         = "http://localhost:9090/"
 	author       = "author"
 	authorForm   = "?ID="
+	activity     = "activity"
 )
 
 var (
-	pin = rpio.Pin(17)
+	//pin     = rpio.Pin(17)
+	MACAddr = regexp.MustCompile(formatMAC)
 )
 
 type Addresses struct {
@@ -43,43 +47,35 @@ func main() {
 	// var test Addresses
 	logger := logg.NewLogfmtLogger(os.Stderr)
 	svc := newService(logger)
-	if err := rpio.Open(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	pin.Output()
-
-	// cmd := exec.Command(commandName, commandArg, commandValue)
-
-	// retour, err := cmd.StdoutPipe()
-	// if err != nil {
-	// 	fmt.Println("Erreur lors de l'exécution de la commande type: ", err)
+	// if err := rpio.Open(); err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
 	// }
+	// pin.Output()
 
-	// chanOut := make(chan string)
+	cmd := exec.Command(commandName, commandArg, commandValue)
+
+	retour, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Println("Erreur lors de l'exécution de la commande type: ", err)
+	}
+
+	chanOut := make(chan string)
 	errs := make(chan error)
 
-	// go listenIO(chanOut, cmd)
+	go listenIO(chanOut, cmd)
 
-	// go getIO(retour, chanOut)
+	go getIO(retour, chanOut)
 
 	go startHTTPServer(api.MakeHandler(svc), port, errs)
 
-	for {
-		res := getRequest("list")
-		log.Println("res:", string(res))
-		if string(res) == "OK" {
-			pin.Toggle()
-		}
-		time.Sleep(time.Second)
+	// res = getRequest("list")
+	// log.Println("res:", string(res))
+	// if string(res) == "OK" {
+	// 	pin.Toggle()
+	// }
+	// time.Sleep(time.Second)
 
-		res = getRequest("list")
-		log.Println("res:", string(res))
-		if string(res) == "OK" {
-			pin.Toggle()
-		}
-		time.Sleep(time.Second)
-	}
 	// errjsonparse := json.Unmarshal(res, &test)
 
 	// if errjsonparse != nil {
@@ -89,16 +85,17 @@ func main() {
 	// log.Printf("JSON Parse -> %v\n", test)
 
 	// startAddr := regexp.MustCompile(strenghtMAC)
-	// MACAddr := regexp.MustCompile(formatMAC)
 
 	// for adresse := range chanOut {
 
 	// 	addr := MACAddr.FindString(adresse)
-	// 	start := startAddr.FindString(adresse)
-
-	// 	if addr != "" && start != "" {
-	// 		fmt.Println(addr, start)
+	// 	// start := startAddr.FindString(adresse)
+	// 	res := getRequest(addr)
+	// 	log.Println("res:", string(res))
+	// 	if string(res) == "OK" {
+	// 		postRequest("Camion entre")
 	// 	}
+
 	// }
 
 	go func() {
@@ -107,7 +104,7 @@ func main() {
 		errs <- fmt.Errorf("%s", <-c)
 	}()
 
-	err := <-errs
+	err = <-errs
 	log.Printf("%s", fmt.Sprintf("service terminated: %s", err))
 }
 
@@ -132,34 +129,34 @@ func newService(logger logg.Logger) service.MACService {
 	return svc
 }
 
-// func listenIO(chanOut chan string, cmd *exec.Cmd) {
+func listenIO(chanOut chan string, cmd *exec.Cmd) {
 
-// 	chanError := cmd.Start()
-// 	if chanError != nil {
-// 		log.Printf("Error: %s", chanError)
-// 	}
+	chanError := cmd.Start()
+	if chanError != nil {
+		log.Printf("Error: %s", chanError)
+	}
 
-// 	chanError = cmd.Wait()
-// 	if chanError != nil {
-// 		log.Printf("Error: %s", chanError)
-// 	}
+	chanError = cmd.Wait()
+	if chanError != nil {
+		log.Printf("Error: %s", chanError)
+	}
 
-// 	close(chanOut)
+	close(chanOut)
 
-// }
+}
 
-// func getIO(retour io.ReadCloser, chanOut chan string) {
-// 	scanner := bufio.NewScanner(retour)
+func getIO(retour io.ReadCloser, chanOut chan string) {
+	scanner := bufio.NewScanner(retour)
 
-// 	for scanner.Scan() {
-// 		chanOut <- scanner.Text()
-// 	}
+	for scanner.Scan() {
+		chanOut <- scanner.Text()
+	}
 
-// 	channError := scanner.Err()
-// 	if channError != nil {
-// 		log.Printf("Error: %s", channError)
-// 	}
-// }
+	channError := scanner.Err()
+	if channError != nil {
+		log.Printf("Error: %s", channError)
+	}
+}
 
 func startHTTPServer(handler http.Handler, port string, errs chan error) {
 
@@ -198,6 +195,23 @@ func getRequest(id string) []byte {
 	response, errors := http.Get(req)
 	if errors != nil {
 		log.Println("Error Get method")
+	}
+	body, errors := io.ReadAll(response.Body)
+	if errors != nil {
+		log.Println("Error Read Body")
+	}
+	response.Body.Close()
+
+	return body
+}
+
+func postRequest(mssg string) []byte {
+
+	req := link + author + activity
+	msg := bytes.NewBuffer([]byte(mssg))
+	response, errors := http.Post(req, "text/plain", msg)
+	if errors != nil {
+		log.Println("Error post method")
 	}
 	body, errors := io.ReadAll(response.Body)
 	if errors != nil {

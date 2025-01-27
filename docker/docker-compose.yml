@@ -13,3 +13,13 @@ services:
       - docker-base-net
     ports:
       - "9090:9090"
+
+    privileged: true
+    devices:
+      - "/dev/gpiomem:/dev/gpiomem"
+      - "/dev/serial1:/dev/serial1"
+      - "/dev/vhci:/dev/vhci"
+    volumes:
+      - /sys/class/gpio:/sys/class/gpio
+      - /run/dbus:/run/dbus
+      - /usr/bin/bluetoothctl
